@@ -50,6 +50,7 @@
                           ng-bind-html="list.config.url | highlight:searchInfo">
                         {{list.config.url}}
                     </span>
+                    <span ng-class="{'label label-warning':result.error, 'label label-info':!result.error}" ng-repeat="result in list.config" div>{{result.statusText}}</span>
                     <pre ng-if="opened">{{ list | json}}</pre>
                 </div>
             </div>
