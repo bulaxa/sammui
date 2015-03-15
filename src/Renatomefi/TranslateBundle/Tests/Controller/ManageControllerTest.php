@@ -2,20 +2,43 @@
 
 namespace Renatomefi\TranslateBundle\Tests\Controller;
 
-use Renatomefi\TestBundle\MongoDB\MongoUtils;
-use Renatomefi\TestBundle\Rest\RestUtils;
-use Renatomefi\TranslateBundle\Tests\Lang;
+use Renatomefi\TestBundle\MongoDB\AssertMongoUtils;
+use Renatomefi\TestBundle\MongoDB\AssertMongoUtilsInterface;
+use Renatomefi\TestBundle\Rest\AssertRestUtils;
+use Renatomefi\TestBundle\Rest\AssertRestUtilsInterface;
+use Renatomefi\TranslateBundle\Tests\AssertLang;
+use Renatomefi\TranslateBundle\Tests\AssertLangInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ManageControllerTest extends WebTestCase
+/**
+ * Class ManageControllerTest
+ * @package Renatomefi\TranslateBundle\Tests\Controller
+ */
+class ManageControllerTest extends WebTestCase implements AssertRestUtilsInterface, AssertMongoUtilsInterface, AssertLangInterface
 {
 
-    use MongoUtils, RestUtils, Lang;
+    use AssertMongoUtils, AssertRestUtils, AssertLang;
 
+    /**
+     * Default Language name
+     */
     const LANG = 'unit-test';
+
+    /**
+     * Default translate key
+     */
     const TRANSLATION_KEY = 'unit-test-translation-key';
+
+    /**
+     * Default translate value
+     */
     const TRANSLATION_VALUE = 'unit-test-translation-value';
 
+    /**
+     * @param string $method
+     * @param bool $assertJson
+     * @return mixed|null|\Symfony\Component\HttpFoundation\Response
+     */
     protected function queryLangManage($method = 'GET', $assertJson = true)
     {
         $client = static::createClient();
@@ -29,19 +52,30 @@ class ManageControllerTest extends WebTestCase
         return (TRUE === $assertJson) ? $this->assertJsonResponse($response, 200, true) : $response;
     }
 
-    protected function queryLangTranslationManage($method = 'GET', $setValue = false, $assertJson = true)
+    /**
+     * @param string $method
+     * @param bool $params
+     * @param bool $noKey
+     * @param bool $assertJson
+     * @return mixed|null|\Symfony\Component\HttpFoundation\Response
+     */
+    protected function queryLangTranslationManage($method = 'GET', $params = false, $noKey = false, $assertJson = true)
     {
-        $params = [];
+        $requestParams = [];
 
-        if (TRUE === $setValue) {
-            $params['value'] = static::TRANSLATION_VALUE;
-        } elseif (is_array($setValue)) {
-            $params = $setValue;
+        $keyString = (TRUE === $noKey) ? '/keys' : '/keys/' . static::TRANSLATION_KEY;
+
+        if (TRUE === $params) {
+            $requestParams['value'] = static::TRANSLATION_VALUE;
+        } elseif (is_array($params)) {
+            $requestParams = $params;
+        } elseif (is_string($params)) {
+            $requestParams['value'] = $params;
         }
 
         $client = static::createClient();
 
-        $client->request($method, '/l10n/manage/langs/' . static::LANG . '/keys/' . static::TRANSLATION_KEY, $params, [], [
+        $client->request($method, '/l10n/manage/langs/' . static::LANG . $keyString, $requestParams, [], [
             'HTTP_ACCEPT' => 'application/json'
         ]);
 
@@ -50,6 +84,9 @@ class ManageControllerTest extends WebTestCase
         return (TRUE === $assertJson) ? $this->assertJsonResponse($response, 200, true) : $response;
     }
 
+    /**
+     * Test creating a new Lang
+     */
     public function testLangCreate()
     {
         $lang = $this->queryLangManage('POST');
@@ -60,6 +97,7 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test creating a new Translation for Lang
      * @depends      testLangCreate
      */
     public function testLangTranslationCreate()
@@ -71,11 +109,12 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test Translation duplication for Lang
      * @depends      testLangTranslationCreate
      */
     public function testLangTranslationCreateDuplicate()
     {
-        $response = $this->queryLangTranslationManage('POST', true, false);
+        $response = $this->queryLangTranslationManage('POST', true, false, false);
 
         $translation = $this->assertJsonResponse($response, 409, true);
 
@@ -83,6 +122,7 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test Getting the Translation
      * @depends      testLangTranslationCreate
      */
     public function testLangTranslationGet()
@@ -94,7 +134,43 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test Lang list in array format
+     * @depends      testLangTranslationCreate
+     */
+    public function testLangKeys()
+    {
+        $translations = $this->queryLangTranslationManage('GET', false, true, false);
+
+        $ts = json_decode($translations->getContent());
+
+        $foundTranslation = false;
+        foreach ($ts as $t) {
+            if ($t->key == static::TRANSLATION_KEY) $foundTranslation = $t;
+        }
+        $this->assertNotEmpty($foundTranslation, 'Didn\'t find the translation on list');
+
+        $this->assertLangTranslationFormat($foundTranslation);
+        $this->assertLangTranslationData($foundTranslation);
+    }
+
+    /**
+     * Test Editing the Translation
+     * @depends      testLangKeys
      * @depends      testLangTranslationGet
+     */
+    public function testLangTranslationEdit()
+    {
+        $translation = $this->queryLangTranslationManage('PUT', self::TRANSLATION_VALUE . '-edited');
+
+        $this->assertLangTranslationFormat($translation);
+        $this->assertLangTranslationData($translation, true);
+        $this->assertNotEquals(static::TRANSLATION_VALUE, $translation->value);
+        $this->assertEquals(static::TRANSLATION_VALUE . '-edited', $translation->value);
+    }
+
+    /**
+     * Test deleting the Translation
+     * @depends      testLangTranslationEdit
      * @depends      testLangTranslationCreateDuplicate
      */
     public function testLangTranslationDelete()
@@ -105,6 +181,22 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test Getting the Translation
+     * @depends      testLangTranslationDelete
+     */
+    public function testLangTranslationNotFound()
+    {
+        $response = $this->queryLangTranslationManage('GET', false, false, false);
+
+        $notFound = $this->assertJsonResponse($response, 404, true);
+
+        $baseFormat = 'No key "%s" found for lang "%s"';
+        $this->assertStringMatchesFormat($baseFormat, $notFound->message);
+        $this->assertSame(sprintf($baseFormat, static::TRANSLATION_KEY, static::LANG), $notFound->message);
+    }
+
+    /**
+     * Testing getting the Lang
      * @depends      testLangCreate
      */
     public function testLangGet()
@@ -116,6 +208,7 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test duplicating the Lang
      * @depends      testLangCreate
      */
     public function testLangDuplicate()
@@ -128,6 +221,7 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test the entire Lang list
      * @depends testLangCreate
      */
     public function testLangsList()
@@ -153,6 +247,7 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test all Langs info
      * @depends testLangCreate
      */
     public function testLangsInfo()
@@ -176,6 +271,7 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test delete the Lang
      * @depends      testLangGet
      * @depends      testLangsList
      * @depends      testLangsInfo
@@ -190,6 +286,7 @@ class ManageControllerTest extends WebTestCase
     }
 
     /**
+     * Test retrieving a non existent Lang
      * @depends      testLangDelete
      */
     public function testLangNotFound()

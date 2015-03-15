@@ -2,9 +2,17 @@
 
 namespace Renatomefi\FormBundle\Tests\Form;
 
-trait Protocol
+/**
+ * Class AssertProtocol
+ * @package Renatomefi\FormBundle\Tests\Form
+ * @codeCoverageIgnore
+ */
+trait AssertProtocol
 {
-    protected function assertFormProtocolStructure($form)
+    /**
+     * @inheritdoc
+     */
+    public function assertFormProtocolStructure($form)
     {
         $this->assertObjectHasAttribute('id', $form);
         $this->assertObjectHasAttribute('created_at', $form);

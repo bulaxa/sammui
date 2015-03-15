@@ -2,9 +2,15 @@
 
 namespace Renatomefi\ApiBundle\Tests\Auth;
 
-trait ClientCredentials
+/**
+ * @codeCoverageIgnore
+ */
+trait AssertClientCredentials
 {
-    protected function assertClientCredentialsObjStructure($clientCredentials)
+    /**
+     * @inheritdoc
+     */
+    public function assertClientCredentialsObjStructure($clientCredentials)
     {
         $this->assertObjectHasAttribute('access_token', $clientCredentials);
         $this->assertObjectHasAttribute('expires_in', $clientCredentials);
@@ -12,7 +18,10 @@ trait ClientCredentials
         $this->assertObjectHasAttribute('scope', $clientCredentials);
     }
 
-    protected function assertClientCredentialsToken($clientCredentials, $tokenName = 'access_token')
+    /**
+     * @inheritdoc
+     */
+    public function assertClientCredentialsToken($clientCredentials, $tokenName = 'access_token')
     {
         $this->assertObjectHasAttribute($tokenName, $clientCredentials);
         $this->assertNotEmpty($clientCredentials->{$tokenName}, $clientCredentials->{$tokenName});

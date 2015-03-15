@@ -8,10 +8,22 @@ use OAuth2\OAuth2;
 use Symfony\Component\DependencyInjection\ContainerAwareInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * Class LoadOAuthClient
+ * @package Renatomefi\ApiBundle\DataFixtures\MongoDB
+ */
 class LoadOAuthClient implements FixtureInterface, ContainerAwareInterface
 {
 
+    /**
+     * PHPUnit OAuth Client Name
+     */
     const CLIENT_NAME = 'sammui-php-unit';
+
+    /**
+     * Application OAuth Client Name
+     */
+    const APP_CLIENT_NAME = 'sammui';
 
     /**
      * @var ContainerInterface
@@ -42,6 +54,17 @@ class LoadOAuthClient implements FixtureInterface, ContainerAwareInterface
             OAuth2::GRANT_TYPE_REFRESH_TOKEN,
             OAuth2::GRANT_TYPE_IMPLICIT,
             OAuth2::GRANT_TYPE_CLIENT_CREDENTIALS
+        ]);
+
+        $clientManager->updateClient($client);
+
+        $client = $clientManager->createClient();
+        $client->setName(static::APP_CLIENT_NAME);
+        $client->setRedirectUris(['/']);
+        $client->setAllowedGrantTypes([
+            OAuth2::GRANT_TYPE_CLIENT_CREDENTIALS,
+            OAuth2::GRANT_TYPE_USER_CREDENTIALS,
+            OAuth2::GRANT_TYPE_REFRESH_TOKEN
         ]);
 
         $clientManager->updateClient($client);

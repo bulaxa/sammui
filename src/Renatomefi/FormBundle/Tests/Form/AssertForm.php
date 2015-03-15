@@ -2,9 +2,17 @@
 
 namespace Renatomefi\FormBundle\Tests\Form;
 
-trait Form
+/**
+ * Class AssertForm
+ * @package Renatomefi\FormBundle\Tests\Form
+ * @codeCoverageIgnore
+ */
+trait AssertForm
 {
-    protected function assertFormStructure($form)
+    /**
+     * @inheritdoc
+     */
+    public function assertFormStructure($form)
     {
         $this->assertObjectHasAttribute('id', $form);
         $this->assertObjectHasAttribute('name', $form);

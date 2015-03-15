@@ -2,15 +2,17 @@
 
 namespace Renatomefi\TestBundle\MongoDB;
 
+
 /**
+ * Class AssertMongoUtils
+ * @package Renatomefi\TestBundle\MongoDB
  * @codeCoverageIgnore
  */
-trait MongoUtils
+trait AssertMongoUtils
 {
+
     /**
-     * Validate for \MongoDate format
-     *
-     * @param mixed $dateObj
+     * @inheritdoc
      */
     public function assertMongoDateFormat($dateObj)
     {
@@ -25,8 +27,7 @@ trait MongoUtils
     }
 
     /**
-     * @param \StdClass $response
-     * @param String $duplicateKey
+     * @inheritdoc
      */
     public function assertMongoDuplicateEntry(\StdClass $response, $duplicateKey = null)
     {
@@ -41,16 +42,7 @@ trait MongoUtils
     }
 
     /**
-     * Validate for typical MongoDB Delete json response
-     * {
-     *   "n":1,
-     *   "connectionId":47,
-     *   "ok":1
-     * }
-     *
-     * @param mixed $deleteResponse
-     * @param bool $assertDeleteQty Should test for number of deletions made by Mongo?
-     * @throws \Exception
+     * @inheritdoc
      */
     public function assertMongoDeleteFormat($deleteResponse, $assertDeleteQty = true)
     {

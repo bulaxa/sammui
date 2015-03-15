@@ -2,59 +2,75 @@
 
 namespace Renatomefi\FormBundle\Tests\Controller;
 
-use Renatomefi\ApiBundle\Tests\AuthTest;
-use Renatomefi\FormBundle\Tests\Form\Form;
-use Renatomefi\TestBundle\MongoDB\MongoUtils;
-use Renatomefi\TestBundle\Rest\RestUtils;
+use Renatomefi\ApiBundle\Tests\Auth\OAuthClient;
+use Renatomefi\ApiBundle\Tests\Auth\OAuthClientInterface;
+use Renatomefi\FormBundle\Tests\Form\AssertForm;
+use Renatomefi\FormBundle\Tests\Form\AssertFormInterface;
+use Renatomefi\TestBundle\MongoDB\AssertMongoUtils;
+use Renatomefi\TestBundle\MongoDB\AssertMongoUtilsInterface;
+use Renatomefi\TestBundle\Rest\AssertRestUtils;
+use Renatomefi\TestBundle\Rest\AssertRestUtilsInterface;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ManageControllerTest extends WebTestCase
+/**
+ * Class ManageControllerTest
+ * @package Renatomefi\FormBundle\Tests\Controller
+ */
+class ManageControllerTest extends WebTestCase implements OAuthClientInterface, AssertRestUtilsInterface, AssertMongoUtilsInterface, AssertFormInterface
 {
 
-    use MongoUtils, Form, RestUtils;
+    use AssertMongoUtils, AssertForm, AssertRestUtils, OAuthClient;
 
+    /**
+     * @var
+     */
     protected $_oAuthCredentials;
 
+    /**
+     * @inheritdoc
+     */
     protected function setUp()
     {
-        $auth = new AuthTest();
+        $this->_oAuthCredentials = $this->getAdminCredentials();
 
-        $auth->setUp();
-        $this->_oAuthCredentials = $auth->testPasswordOAuth();
-    }
-
-    public function testFormList()
-    {
-        $this->markTestIncomplete('Need to create a test');
-    }
-
-    public function testFormGet()
-    {
-        $this->markTestIncomplete('Need to create a test');
-    }
-
-    public function testFormNew()
-    {
-
-        $clientCredentials = $this->_oAuthCredentials;
-        if (!$clientCredentials) {
+        if (!$this->_oAuthCredentials) {
             $this->markTestSkipped('No credentials to Login');
         }
+    }
 
+    /**
+     * @param string $method
+     * @param bool $assertJson
+     * @param array $params
+     * @return mixed|null|\Symfony\Component\HttpFoundation\Response
+     */
+    protected function queryFormManage($method = 'GET', $assertJson = true, $params = array())
+    {
         $client = static::createClient();
 
-        $client->request('POST', '/form/manage',
-            [
-                'access_token' => $clientCredentials->access_token,
-                'name' => 'Form Test PHPUnit: ' . time()
-            ], [], [
-                'HTTP_ACCEPT' => 'application/json',
-            ]
-        );
+        $defaultParams = [
+            'access_token' => $this->_oAuthCredentials->access_token
+        ];
+
+        if (count($params) > 0) $defaultParams = array_merge($params, $defaultParams);
+
+        $client->request($method, '/form/manage', $defaultParams, [], [
+            'HTTP_ACCEPT' => 'application/json'
+        ]);
 
         $response = $client->getResponse();
 
-        $form = $this->assertJsonResponse($response, 200, true);
+        return (TRUE === $assertJson) ? $this->assertJsonResponse($response, 200, true) : $response;
+    }
+
+    /**
+     * @return mixed|null|\Symfony\Component\HttpFoundation\Response
+     */
+    public function testFormNew()
+    {
+        $form = $this->queryFormManage('POST', true, [
+            'name' => 'Form Test PHPUnit: ' . time()
+        ]);
 
         $this->assertFormStructure($form);
         $this->assertNotEmpty($form->id);
@@ -62,5 +78,72 @@ class ManageControllerTest extends WebTestCase
 
         $this->assertMongoDateFormat($form->created_at);
 
+        return $form;
     }
+
+    /**
+     * @depends testFormNew
+     *
+     * @param $form
+     */
+    public function testFormDuplicate($form)
+    {
+        $this->markTestIncomplete('There is no constraint in form names');
+    }
+
+    /**
+     * @depends testFormNew
+     *
+     * @param $form
+     */
+    public function testFormGet($form)
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/form/manage/' . $form->id, [], [], [
+            'HTTP_ACCEPT' => 'application/json'
+        ]);
+
+        $formGet = $this->assertJsonResponse($client->getResponse(), 200, true);
+
+        $this->assertFormStructure($formGet);
+        $this->assertEquals($form->name, $formGet->name);
+    }
+
+    /**
+     * @depends testFormNew
+     *
+     * @param $form
+     */
+    public function testFormList($form)
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/form/manage/list/all', [], [], [
+            'HTTP_ACCEPT' => 'application/json'
+        ]);
+
+        $formList = $this->assertJsonResponse($client->getResponse(), 200, true, true);
+
+        $this->assertTrue((count($formList) >= 1));
+
+        $foundForm = false;
+        foreach ($formList as $f) {
+            if ($f->name == $form->name) $foundForm = true;
+        }
+        $this->assertTrue($foundForm, 'Didn\'t find the form on the list');
+    }
+
+    /**
+     * @depends testFormNew
+     * @depends testFormGet
+     * @depends testFormList
+     *
+     * @param $form
+     */
+    public function testFormDelete($form)
+    {
+        $this->markTestIncomplete('There is not delete in forms API');
+    }
+
 }

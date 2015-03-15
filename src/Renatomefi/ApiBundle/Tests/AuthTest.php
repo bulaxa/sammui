@@ -3,31 +3,43 @@
 namespace Renatomefi\ApiBundle\Tests;
 
 use OAuth2\OAuth2;
-use Renatomefi\ApiBundle\Tests\Auth\UserInfo;
-use Renatomefi\ApiBundle\Tests\Auth\ClientCredentials;
-use Renatomefi\TestBundle\Rest\RestUtils;
-use Renatomefi\ApiBundle\DataFixtures\MongoDB\LoadOAuthClient;
+use Renatomefi\ApiBundle\Tests\Auth\AssertClientCredentials;
+use Renatomefi\ApiBundle\Tests\Auth\AssertClientCredentialsInterface;
+use Renatomefi\ApiBundle\Tests\Auth\AssertUserInfo;
+use Renatomefi\ApiBundle\Tests\Auth\AssertUserInfoInterface;
+use Renatomefi\ApiBundle\Tests\Auth\OAuthClient;
+use Renatomefi\ApiBundle\Tests\Auth\OAuthClientInterface;
+use Renatomefi\TestBundle\Rest\AssertRestUtils;
+use Renatomefi\TestBundle\Rest\AssertRestUtilsInterface;
 use Renatomefi\UserBundle\DataFixtures\MongoDB\LoadUsers;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
 
-class AuthTest extends WebTestCase
+/**
+ * Class AuthTest
+ * @package Renatomefi\ApiBundle\Tests
+ */
+class AuthTest extends WebTestCase implements AssertUserInfoInterface, AssertClientCredentialsInterface, OAuthClientInterface, AssertRestUtilsInterface
 {
 
-    use UserInfo, ClientCredentials, RestUtils;
+    use AssertUserInfo, AssertClientCredentials, AssertRestUtils, OAuthClient;
 
+    /**
+     * OAuth2 Client ID
+     * @var
+     */
     protected $_clientId;
+    /**
+     * OAuth2 Client Secret
+     * @var
+     */
     protected $_clientSecret;
 
+    /**
+     * @return \Renatomefi\ApiBundle\Document\Client
+     */
     public function setUp()
     {
-        $kernel = static::createKernel();
-        $kernel->boot();
-        $clientManager = $kernel->getContainer()->get('fos_oauth_server.client_manager.default');
-        $client = $clientManager->findClientBy(['name' => LoadOAuthClient::CLIENT_NAME]);
-
-        if (!$client)
-            throw new AuthenticationCredentialsNotFoundException('OAuth2 Client no found, unable to continue the test');
+        $client = $this->getOAuthClient();
 
         $this->_clientId = $client->getPublicId();
         $this->_clientSecret = $client->getSecret();
@@ -35,6 +47,9 @@ class AuthTest extends WebTestCase
         return $client;
     }
 
+    /**
+     * @return mixed
+     */
     public function testAnonymousOAuth()
     {
         $client = static::createClient();
@@ -62,6 +77,9 @@ class AuthTest extends WebTestCase
         return $clientCredentials;
     }
 
+    /**
+     * @return mixed
+     */
     public function testPasswordOAuth()
     {
         $client = static::createClient();
@@ -144,6 +162,9 @@ class AuthTest extends WebTestCase
         return $refreshClientCredentials;
     }
 
+    /**
+     *
+     */
     public function testEmptySession()
     {
         $client = static::createClient();
@@ -158,6 +179,9 @@ class AuthTest extends WebTestCase
         $this->assertUserInfoObjNoAuth($userInfo);
     }
 
+    /**
+     *
+     */
     public function testLogoutRedirect()
     {
         $client = static::createClient();

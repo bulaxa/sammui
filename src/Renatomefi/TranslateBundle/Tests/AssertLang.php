@@ -2,12 +2,18 @@
 
 namespace Renatomefi\TranslateBundle\Tests;
 
+
 /**
+ * Class AssertLang
+ * @package Renatomefi\TranslateBundle\Tests
  * @codeCoverageIgnore
  */
-trait Lang
+trait AssertLang
 {
-    protected function assertLangStructure($langObj)
+    /**
+     * @inheritdoc
+     */
+    public function assertLangStructure($langObj)
     {
         $this->assertObjectHasAttribute('id', $langObj);
         $this->assertObjectHasAttribute('last_update', $langObj);
@@ -15,7 +21,10 @@ trait Lang
         $this->assertObjectHasAttribute('translations', $langObj);
     }
 
-    protected function assertLangTranslationFormat($translation)
+    /**
+     * @inheritdoc
+     */
+    public function assertLangTranslationFormat($translation)
     {
         $this->assertObjectHasAttribute('id', $translation);
         $this->assertObjectHasAttribute('key', $translation);
@@ -23,10 +32,14 @@ trait Lang
         $this->assertObjectHasAttribute('language', $translation);
     }
 
-    protected function assertLangTranslationData($translation)
+    /**
+     * @inheritdoc
+     */
+    public function assertLangTranslationData($translation, $skipValue = false)
     {
         $this->assertEquals(static::TRANSLATION_KEY, $translation->key);
-        $this->assertEquals(static::TRANSLATION_VALUE, $translation->value);
         $this->assertEquals(static::LANG, $translation->language->key);
+        if (FALSE === $skipValue) $this->assertEquals(static::TRANSLATION_VALUE, $translation->value);
+
     }
 }

@@ -4,10 +4,12 @@ namespace Renatomefi\ApiBundle\Document;
 
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 use FOS\OAuthServerBundle\Document\AuthCode as BaseAuthCode;
-use Symfony\Component\Security\Core\User\UserInterface;
 use FOS\OAuthServerBundle\Model\ClientInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
+ * Class AuthCode
+ * @package Renatomefi\ApiBundle\Document
  * @ODM\Document
  */
 class AuthCode extends BaseAuthCode
