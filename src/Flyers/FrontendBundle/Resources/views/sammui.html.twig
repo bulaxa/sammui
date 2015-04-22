@@ -3,7 +3,7 @@
 {% block metatags %}
     {{ parent() }}
 
-    <meta name="sammui-oauth2-client-id" content="{{ OAuthClientId }}" ng-bind="oAuth.test"/>
+    <meta name="sammui-oauth2-client-id" content="{{ OAuthClientId }}"/>
     <meta name="sammui-oauth2-client-secret" content="{{ OAuthClientSecret }}"/>
 {% endblock %}
 
@@ -65,8 +65,8 @@
                     <strong>{{ loadingList.completedErrorPercent | number:2 }}%</strong>
                 </div>
                 <div
-                     class="progress-bar progress-bar-info" role="progressbar"
-                     style="width: 100%; width: {{ (100 - loadingList.totalPercent) }}%">
+                        class="progress-bar progress-bar-info" role="progressbar"
+                        style="width: 100%; width: {{ (100 - loadingList.totalPercent) }}%">
                     <strong><i class="fa fa-circle-o-notch fa-spin"></i></strong>
                 </div>
             </div>
@@ -153,7 +153,13 @@
             src="{{ asset('bundles/form/angular/form/services/formServices.js') }}"></script>
     <script type="text/javascript"
             src="{{ asset('bundles/form/angular/form/controllers/formControllers.js') }}"></script>
- 
+    <script type="text/javascript"
+            src="{{ asset('bundles/form/angular/form/directives/formDirectives.js') }}"></script>
+    <script type="text/javascript"
+            src="{{ asset('bundles/form/angular/form/services/protocolServices.js') }}"></script>
+    <script type="text/javascript"
+            src="{{ asset('bundles/form/angular/form/controllers/protocolControllers.js') }}"></script>
+
     {#Angular APP#}
     <script type="text/javascript"
             src="{{ asset('bundles/frontend/angular/app.sammui.js') }}"></script>
