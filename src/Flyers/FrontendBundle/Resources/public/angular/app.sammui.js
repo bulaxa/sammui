@@ -15,7 +15,7 @@ var sammui = angular.module('sammui', [
     'sammui.mainFilters',
     'sammui.mainServices',
     'sammui.mainDirectives',
-    'sammui.mainControllers',
+    'sammui.mainControllers'
 ]).config(function ($locationProvider, $routeProvider, $compileProvider) {
 
     $compileProvider.debugInfoEnabled(true);
