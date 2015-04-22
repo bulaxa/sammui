@@ -1,27 +1,42 @@
-<div><strong>{{protocol.data.form.name}}</strong></div>
-<div><strong>{{protocol.data.id}}</strong> {{protocol.data.created_at | date}}, {{protocol.data.created_at | date:'mediumTime'}}</div>
-<div class="center-block">
-    <nav>
-        <ul class="pager">
-            <li><a href="#">Index</a></li>
-            <li><a href="#">Home</a></li>
-            <li class="bg-success"><a href="#">Save</a></li>
-        </ul>
-    </nav>
-    <nav>
-        <ul class="pagination pagination-sm">
-            <li ng-disabled="true">
-                <a aria-label="Previous">
-                    <span aria-hidden="true">&laquo;</span>
-                </a>
-            </li>
-            <li><a ng-click="toPage(1)">1</a></li>
-            <li><a ng-click="toPage(2)">2</a></li>
-            <li ng-disabled="true">
-                <a href="#" aria-label="Previous">
-                    <span aria-hidden="true">&raquo;</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
+<div>
+    <div class="list-group-item list-group-item-home text-center"
+         ng-show="headerType === 'index'">
+        <h1><i class="glyphicon glyphicon-file feature-icon text-primary"></i>
+            {{ ::protocol.data.form.name }}
+        </h1>
+    </div>
+    <div class="list-group-item media bg-success text-center">
+        <h3>
+            <i class="glyphicon glyphicon-barcode"></i>
+            {{ ::protocol.data.id }}
+        </h3>
+    </div>
+    <div class="list-group-item media bg-info text-center">
+        <i class="glyphicon glyphicon-time"></i> {{ ::protocol.data.created_at | date : 'short' }}
+    </div>
+    <div ng-hide="headerType === 'index'">
+        <div class="list-group-item media text-center">
+            <ul class="nav nav-pills">
+                <li ng-repeat="t in templates"
+                    ng-class="{active: (t.name == currentPage)}">
+                    <a ng-click="toPage()(t.name)">{{'form-filling-page-' + t.name | translate}}</a>
+                </li>
+                <li ng-class="{active: (headerType === 'form')}">
+                    <a ng-click="toPage()(1)">{{'form-filling-page-form' | translate}}</a>
+                </li>
+            </ul>
+        </div>
+        <div class="list-group-item media text-center"
+             ng-show="(headerType === 'form')">
+            <ul class="pagination" style="margin: 0;">
+                <li><a href="#">&laquo;</a></li>
+                <li role="presentation"
+                    ng-repeat="page in pages | orderBy: 'number'"
+                    ng-class="{active: (page.number == currentPage)}">
+                    <a ng-click="toPage()(page.number)">{{page.number}}</a>
+                </li>
+                <li><a href="#">&raquo;</a></li>
+            </ul>
+        </div>
+    </div>
 </div>

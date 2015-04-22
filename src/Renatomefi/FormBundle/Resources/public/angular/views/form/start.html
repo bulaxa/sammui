@@ -1,3 +1,8 @@
+<!-- Controller: formStart -->
+<div ui-content-for="title">
+    {{ 'form-start-title' | translate }}
+</div>
+
 <div class="scrollable">
     <div class="scrollable-content">
         <div class="list-group">
@@ -8,14 +13,16 @@
             </div>
             <div class="list-group-item list-group-item-home media">
                 <div class="media-body">
+                    <div class="alert alert-info" ng-show="!forms.data && !forms.loading">
+                        {{ 'form-no-forms' | translate }}
+                    </div>
                     <div class="input-group merged">
                         <div class="input-group-addon">
                             <span class="glyphicon glyphicon-copy" aria-hidden="true"></span>
                         </div>
-
                         <select class="form-control"
                                 ng-model="forms.current"
-                                ng-disabled="forms.loading"
+                                ng-disabled="forms.loading || !forms.data"
                                 ng-options="f.id as f.name for f in forms.data">
                             <option value="" ng-if="!forms.current">
                                 {{ 'form-select-default' | translate }}
@@ -30,23 +37,26 @@
                             </button>
                         </div>
                     </div>
-                    <hr>
-                    <div class="input-group merged">
-                        <div class="input-group-addon">
-                            <span class="glyphicon glyphicon-barcode" aria-hidden="true"></span>
-                        </div>
+                </div>
+            </div>
+            <div class="list-group-item list-group-item-home media">
+                <div class="input-group merged">
+                    <div class="input-group-addon">
+                        <span class="glyphicon glyphicon-barcode" aria-hidden="true"></span>
+                    </div>
 
-                        <input type="text" class="form-control"
-                               pattern=".{24}" required title="24 size"
-                               ng-model="forms.protocol">
+                    <input type="text"
+                           class="form-control"
+                           pattern=".{24}" required
+                           title="24 size"
+                           ng-model="forms.protocol">
 
-                        <div class="input-group-btn">
-                            <button class="btn btn-info"
-                                    ng-disabled="!forms.protocol"
-                                    ng-click="continueForm(forms.protocol)">
-                                <span class="glyphicon glyphicon-fast-forward"></span>
-                            </button>
-                        </div>
+                    <div class="input-group-btn">
+                        <button class="btn btn-info"
+                                ng-disabled="!forms.protocol || !forms.data"
+                                ng-click="continueForm(forms.protocol)">
+                            <span class="glyphicon glyphicon-fast-forward"></span>
+                        </button>
                     </div>
                 </div>
             </div>

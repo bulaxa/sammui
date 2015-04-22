@@ -1,0 +1,17 @@
+{
+  "indent"   : 4,
+  "asi"      : false,
+  "devel"    : true,
+  "browser"  : true,
+  "eqeqeq"   : true,
+  "eqnull"   : false,
+  "expr"     : false,
+  "latedef"  : true,
+  "nonbsp"   : true,
+  "strict"   : true,
+  "globalstrict" : true,
+  "undef"    : true,
+  "unused"   : true,
+  "curly"    : true,
+  "predef"   : ["angular"]
+}

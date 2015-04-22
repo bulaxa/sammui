@@ -2,6 +2,7 @@
 
 namespace Renatomefi\FormBundle\Document;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
 
 /**
@@ -11,6 +12,15 @@ use Doctrine\ODM\MongoDB\Mapping\Annotations as ODM;
  */
 class Form
 {
+
+    /**
+     * Setup document
+     */
+    public function __construct()
+    {
+        $this->setCreatedAt(new \MongoDate());
+        $this->pages = new ArrayCollection();
+    }
 
     /**
      * @ODM\Id(strategy="auto")
@@ -28,13 +38,53 @@ class Form
     protected $createdAt;
 
     /**
+     * @ODM\EmbedMany(targetDocument="FormPage")
+     * @var ArrayCollection
+     */
+    protected $pages;
+
+    /**
+     * @ODM\String
+     */
+    protected $template;
+
+    /**
+     * @ODM\ReferenceMany(targetDocument="FormField", mappedBy="form")
+     */
+    protected $fields;
+
+    /**
      * Get id
      *
-     * @return id $id
+     * @return $id
      */
     public function getId()
     {
         return $this->id;
+    }
+
+    /**
+     * Set template
+     *
+     * This template should match a path inside Resources/public/angular/views/form/pages/{{template}}
+     * in order to provide the page's views
+     * @param string $template
+     * @return self
+     */
+    public function setTemplate($template)
+    {
+        $this->template = $template;
+        return $this;
+    }
+
+    /**
+     * Get template
+     *
+     * @return string $name
+     */
+    public function getTemplate()
+    {
+        return $this->template;
     }
 
     /**
@@ -79,5 +129,65 @@ class Form
     public function getCreatedAt()
     {
         return $this->createdAt;
+    }
+
+    /**
+     * Add page
+     *
+     * @param \Renatomefi\FormBundle\Document\FormPage $page
+     */
+    public function addPage(FormPage $page)
+    {
+        $this->pages[] = $page;
+    }
+
+    /**
+     * Remove page
+     *
+     * @param \Renatomefi\FormBundle\Document\FormPage $page
+     */
+    public function removePage(FormPage $page)
+    {
+        $this->pages->removeElement($page);
+    }
+
+    /**
+     * Get pages
+     *
+     * @return \Doctrine\Common\Collections\Collection $pages
+     */
+    public function getPages()
+    {
+        return $this->pages;
+    }
+
+    /**
+     * Add field
+     *
+     * @param \Renatomefi\FormBundle\Document\FormField $field
+     */
+    public function addField(FormField $field)
+    {
+        $this->fields[] = $field;
+    }
+
+    /**
+     * Remove field
+     *
+     * @param \Renatomefi\FormBundle\Document\FormField $field
+     */
+    public function removeField(FormField $field)
+    {
+        $this->fields->removeElement($field);
+    }
+
+    /**
+     * Get fields
+     *
+     * @return \Doctrine\Common\Collections\Collection $fields
+     */
+    public function getFields()
+    {
+        return $this->fields;
     }
 }

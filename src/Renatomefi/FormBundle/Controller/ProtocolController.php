@@ -2,10 +2,14 @@
 
 namespace Renatomefi\FormBundle\Controller;
 
+use Doctrine\ODM\MongoDB\Query\Expr;
 use FOS\RestBundle\Controller\FOSRestController;
-use Renatomefi\FormBundle\Document\Form;
 use Renatomefi\FormBundle\Document\Protocol;
+use Renatomefi\FormBundle\Document\ProtocolComment;
+use Renatomefi\FormBundle\Document\ProtocolFieldValue;
+use Renatomefi\FormBundle\Document\ProtocolUser;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Class ProtocolController
@@ -15,24 +19,36 @@ class ProtocolController extends FOSRestController
 {
 
     /**
+     * @param $id
+     * @param bool $notFoundException
+     * @throws NotFoundHttpException
+     * @return Protocol
+     */
+    protected function getProtocol($id, $notFoundException = true)
+    {
+        $formsDM = $this->get('doctrine_mongodb')->getRepository('FormBundle:Protocol');
+
+        $result = $formsDM->findOneById($id);
+
+        if (!$result && true === $notFoundException)
+            throw $this->createNotFoundException("No Protocol found with id: \"$id\"");
+
+        return $result;
+    }
+
+    /**
      * @param null $id
      * @param bool $notFoundException
      * @return mixed
      */
-    public function getForm($id = null, $notFoundException = false)
+    protected function getForm($id, $notFoundException = false)
     {
         $formsDM = $this->get('doctrine_mongodb')->getRepository('FormBundle:Form');
 
-        if (null == $id) {
-            $form = $formsDM->findAll();
-            $exception = 'No Forms found';
-        } else {
-            $form = $formsDM->findOneById($id);
-            $exception = 'Form not found: ' . $id;
-        }
+        $form = $formsDM->findOneById($id);
 
-        if (TRUE == $notFoundException && !$form) {
-            throw $this->createNotFoundException($exception);
+        if (TRUE === $notFoundException && !$form) {
+            throw $this->createNotFoundException("Form not found: $id");
         }
 
         return $form;
@@ -50,9 +66,8 @@ class ProtocolController extends FOSRestController
 
         $result = $protocolDM
             ->createQueryBuilder()
-            ->hydrate(false)
             ->field('form')->references($form)
-            ->field('id')->hydrate(true)
+            ->hydrate(true)
             ->getQuery()
             ->execute()
             ->toArray();
@@ -60,8 +75,7 @@ class ProtocolController extends FOSRestController
         if (!$result)
             throw $this->createNotFoundException("No protocols found for form: \"$formId\"");
 
-        $view = $this->view($result);
-        return $this->handleView($view);
+        return $result;
     }
 
     /**
@@ -70,15 +84,7 @@ class ProtocolController extends FOSRestController
      */
     public function getAction($id)
     {
-        $formsDM = $this->get('doctrine_mongodb')->getRepository('FormBundle:Protocol');
-
-        $result = $formsDM->findOneById($id);
-
-        if (!$result)
-            throw $this->createNotFoundException("No Protocol found with id: \"$id\"");
-
-        $view = $this->view($result);
-        return $this->handleView($view);
+        return $this->getProtocol($id);
     }
 
     /**
@@ -87,20 +93,175 @@ class ProtocolController extends FOSRestController
      */
     public function postAction($formId)
     {
-        $form = $this->getForm($formId, true
-        );
+        $form = $this->getForm($formId, true);
 
         $dm = $this->get('doctrine_mongodb')->getManager();
 
         $protocol = new Protocol();
         $protocol->setForm($form);
-        $protocol->setCreatedAt(new \MongoDate());
 
         $dm->persist($protocol);
         $dm->flush();
 
-        $view = $this->view($protocol);
+        return $protocol;
+    }
 
-        return $this->handleView($view);
+    /**
+     * @param $protocolId
+     * @param $userName
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function patchAddUserAction($protocolId, $userName)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+
+        $protocol = $this->getProtocol($protocolId);
+
+        $userDm = $dm->getRepository('UserBundle:User');
+        $user = $userDm->findOneByUsername($userName);
+
+        if (null === $user) {
+            if (!$protocol->getOneNonUser($userName)) {
+                $nonUser = new ProtocolUser();
+                $nonUser->setUsername($userName);
+                $protocol->addNonUser($nonUser);
+            }
+        } else {
+            if (!$protocol->getUser()->contains($user))
+                $protocol->addUser($user);
+        }
+
+        $dm->persist($protocol);
+        $dm->flush();
+        $dm->clear();
+        unset($protocol);
+
+        $protocol = $this->getProtocol($protocolId);
+
+        return ['user' => $protocol->getUser(), 'nonUser' => $protocol->getNonUser()];
+    }
+
+    /**
+     * @param Request $request
+     * @param $protocolId
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function patchFieldsSaveAction(Request $request, $protocolId)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+
+        $protocol = $this->getProtocol($protocolId);
+
+        $formFieldDM = $dm->getRepository('FormBundle:FormField');
+
+        foreach ($request->get('data') as $item) {
+
+            if (!array_key_exists('value', $item))
+                continue;
+
+            $field = $formFieldDM->find($item['id']);
+            $value = new ProtocolFieldValue();
+            $value->setField($field);
+            $value->setValue($item['value']);
+
+            $protocol->addFieldValue($value);
+        }
+
+        $dm->persist($protocol);
+        $dm->flush();
+        $dm->clear();
+
+        return $this->getProtocol($protocol->getId());
+    }
+
+    /**
+     * @param $protocolId
+     * @param $userName
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function patchRemoveUserAction($protocolId, $userName)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+
+        $protocol = $this->getProtocol($protocolId);
+
+        if ($nonUser = $protocol->getOneNonUser($userName))
+            $protocol->removeNonUser($nonUser);
+
+        if ($user = $protocol->getOneUser($userName))
+            $protocol->removeUser($user);
+
+        $dm->persist($protocol);
+        $dm->flush();
+        $dm->clear();
+        unset($protocol);
+
+        $protocol = $this->getProtocol($protocolId);
+
+        return ['user' => $protocol->getUser(), 'nonUser' => $protocol->getNonUser()];
+    }
+
+    /**
+     * @param Request $request
+     * @param $protocolId
+     */
+    public function patchConclusionAction(Request $request, $protocolId)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+
+        $protocol = $this->getProtocol($protocolId);
+        $protocol->setConclusion($request->get('conclusion'));
+
+        $dm->persist($protocol);
+        $dm->flush();
+        $dm->clear();
+    }
+
+    /**
+     * @param Request $request
+     * @param $protocolId
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function patchAddCommentAction(Request $request, $protocolId)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+
+        $protocol = $this->getProtocol($protocolId);
+
+        $comment = new ProtocolComment();
+        $comment->setBody($request->get('body'));
+
+        $protocol->addComment($comment);
+
+        $dm->persist($protocol);
+        $dm->flush();
+        $dm->clear();
+
+        return $this->getProtocol($protocolId)->getComment()->toArray();
+    }
+
+    /**
+     * @param $protocolId
+     * @param $commentId
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function patchRemoveCommentAction($protocolId, $commentId)
+    {
+        $dm = $this->get('doctrine_mongodb')->getManager();
+
+        $protocol = $this->getProtocol($protocolId);
+
+        $comment = $protocol->getOneComment($commentId);
+
+        if (!$comment)
+            throw $this->createNotFoundException("Comment '$commentId' not found in protocol '$protocolId'");
+
+        $protocol->removeComment($comment);
+
+        $dm->persist($protocol);
+        $dm->flush();
+        $dm->clear();
+
+        return $this->getProtocol($protocolId)->getComment()->toArray();
     }
 }

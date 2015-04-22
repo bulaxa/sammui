@@ -1,0 +1,33 @@
+<div class="panel panel-info" ng-controller="formFillingConclusion">
+    <div class="panel-body">
+        <text-angular-toolbar
+                name="textFormat"
+                ta-toolbar-class="none"
+                ta-toolbar="[['h1','h2','h3'],['bold','italics','underline','strikeThrough']]">
+
+        </text-angular-toolbar>
+        <br>
+        <text-angular-toolbar
+                name="textTools"
+                ta-toolbar-class="none"
+                ta-toolbar="[['ul', 'ol'],['justifyLeft', 'justifyCenter', 'justifyRight'],['html', 'insertLink']]">
+        </text-angular-toolbar>
+        <div class="btn btn-warning"
+             ng-click="saveConclusion()"
+             ng-hide="savedConclusion === currentConclusion">
+            <i class="glyphicon glyphicon-floppy-remove"></i> {{'not-saved' | translate}}
+        </div>
+        <text-angular
+                ng-model="currentConclusion"
+                ng-model-options="{ debounce: 300 }"
+                ta-target-toolbars='textFormat,textTools'>
+        </text-angular>
+        <div class="btn btn-success btn-block"
+             tabindex="4"
+             ng-disabled="loading"
+             ng-click="saveConclusion()"
+             type="submit">
+            <span class="glyphicon glyphicon-ok"></span>
+        </div>
+    </div>
+</div>

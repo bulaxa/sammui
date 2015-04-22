@@ -2,34 +2,23 @@
 
 var sammuiForm = angular.module('sammui.form', [
     'sammui.formServices',
-    'sammui.formControllers'
+    'sammui.formControllers',
+    'sammui.formDirectives',
+    'sammui.protocolServices',
+    'sammui.protocolControllers'
 ]);
 
 sammuiForm.config(function ($locationProvider, $routeProvider) {
-    $routeProvider.when('/form/start', {
+    $routeProvider.when('/form', {
         templateUrl: '/bundles/form/angular/views/form/start.html',
         templatePreload: true,
         controller: 'formStart',
         reloadOnSearch: false
     });
-    $routeProvider.when('/form/start/:protocolId', {
+    $routeProvider.when('/form/:protocolId/:page?/:pageId?', {
         templateUrl: '/bundles/form/angular/views/form/filling/home.html',
-        templatePreload: false,
-        controller: 'formFilling',
+        templatePreload: true,
+        controller: 'formFillingMain',
         reloadOnSearch: false
     });
-    $routeProvider.when('/form/start/:protocolId/page/:pageId', {
-        templateUrl: function (parameters) {
-            return '/bundles/form/angular/views/form/pages/sammui_demo/' + parameters.pageId + '.html';
-        },
-        templatePreload: false,
-        controller: 'formFilling',
-        reloadOnSearch: false
-    });
-});
-
-sammuiForm.directive('formFillingHeader', function() {
-    return {
-        templateUrl: '/bundles/form/angular/views/form/filling/partials/header.html'
-    }
 });

@@ -14,9 +14,10 @@ angular.module('sammui.formControllers', ['ngRoute'])
             $scope.loadForms = function () {
                 $scope.forms.loading = true;
 
-                formList.query({}, function (data) {
-                    $scope.forms.data = data;
-                }).$promise.finally(function () {
+                formList.query({},
+                    function (data) {
+                        $scope.forms.data = data;
+                    }).$promise.finally(function () {
                         $scope.forms.loading = false;
                     });
             };
@@ -28,7 +29,7 @@ angular.module('sammui.formControllers', ['ngRoute'])
             };
 
             $scope.continueForm = function (protocolId) {
-                $location.path('/form/start/' + protocolId);
+                $location.path('/form/' + protocolId);
             };
 
             $scope.loadForms();
@@ -37,35 +38,25 @@ angular.module('sammui.formControllers', ['ngRoute'])
     .controller('formFilling', ['$rootScope', '$scope', '$route', '$routeParams', '$location', 'formProtocolManage',
         function ($rootScope, $scope, $route, $routeParams, $location, formProtocolManage) {
 
+            // TODO it should be a service to store all changes!
             $scope.protocol = {
-                data: undefined,
-                currentPage: $routeParams.pageId
+                data: undefined
             };
-
-            //$scope.userType = 'guest';
 
             $scope.loadProtocol = function () {
                 $rootScope.loading = true;
-
                 formProtocolManage.get(
                     {protocolId: $routeParams.protocolId},
                     function (data) {
-                        $scope.protocol.data = data;
+                        $scope.protocol.data = angular.copy(data);
+                        $scope.$broadcast('formEvent:form-protocol-loaded');
                     },
                     function () {
-                        $location.path('/form/start');
+                        $location.path('/form');
                     })
                     .$promise.finally(function () {
                         $rootScope.loading = false;
                     });
-            };
-
-            $scope.toPage = function (pageId) {
-                if (!angular.isUndefined($routeParams.pageId)) {
-                    $route.updateParams({pageId: pageId});
-                } else {
-                    $location.path($location.path() + '/page/' + pageId);
-                }
             };
 
             $scope.loadProtocol();

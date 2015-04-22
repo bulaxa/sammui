@@ -10,8 +10,9 @@ framework:
     router:
         resource:    "%kernel.root_dir%/config/routing.yml"
         strict_requirements: %kernel.debug%
-    form:            ~
-    csrf_protection: false
+    form:
+        csrf_protection:
+            enabled: false
     validation:      { enable_annotations: true }
     templating:
         engines:     ['twig']
@@ -53,25 +54,6 @@ sp_bower:
         TranslateBundle: ~
         ApiBundle: ~
 
-# Doctrine Configuration
-#doctrine:
-#    dbal:
-#        driver:   %database_driver%
-#        host:     %database_host%
-#        port:     %database_port%
-#        dbname:   %database_name%
-#        user:     %database_user%
-#        password: %database_password%
-#        charset:  UTF8
-#        # if using pdo_sqlite as your database driver, add the path in parameters.yml
-#        # e.g. database_path: %kernel.root_dir%/data/data.db3
-#        # path:     %database_path%
-#
-#    orm:
-#        auto_generate_proxy_classes: %kernel.debug%
-#        auto_mapping: true
-
-# Doctrine MongoDB Bundle Configuration
 doctrine_mongodb:
     connections:
         default:
@@ -83,10 +65,6 @@ doctrine_mongodb:
             auto_mapping: true
             mappings:
                 FOSUserBundle: ~
-#                AppBundle:
-#                    type: annotation
-#                    dir: %kernel.root_dir%/../src/AppBundle/Document
-#                    prefix: AppBundle\Document
 
 # Swiftmailer Configuration
 swiftmailer:
@@ -99,14 +77,14 @@ swiftmailer:
 nelmio_api_doc: ~
 
 fos_oauth_server:
-    db_driver: mongodb
+    db_driver:           mongodb
     client_class:        Renatomefi\ApiBundle\Document\Client
     access_token_class:  Renatomefi\ApiBundle\Document\AccessToken
     refresh_token_class: Renatomefi\ApiBundle\Document\RefreshToken
     auth_code_class:     Renatomefi\ApiBundle\Document\AuthCode
     authorize: ~
     service:
-        user_provider: fos_user.user_manager
+        user_provider:   fos_user.user_manager
         options:
             supported_scopes: read
 
@@ -120,7 +98,7 @@ fos_rest:
             - { path: '^/l10n', priorities: [json, xml, html], fallback_format: json, prefer_extension: false }
             - { path: '^/', priorities: [html, json], fallback_format: html, prefer_extension: false }
     view:
-        view_response_listener: force
+        view_response_listener: 'force'
     routing_loader:
         default_format: json
         include_format: false
@@ -131,16 +109,15 @@ fos_rest:
         messages:
             'Symfony\Component\Routing\Exception\ResourceNotFoundException': true
 
-services:
-  kernel.event_listener.json_request_transformer:
-    class: Qandidate\Common\Symfony\HttpKernel\EventListener\JsonRequestTransformerListener
-    tags:
-      - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 100 }
+sensio_framework_extra:
+    view:    { annotations: false }
 
-# FOS User Bundle for ORM
-# In order to use ORM change the parameters.yml to
-# fos_user_db_driver: orm
-# fos_user_class: Flyers\BackendBundle\Entity\User
+#services:
+#  kernel.event_listener.json_request_transformer:
+#    class: Qandidate\Common\Symfony\HttpKernel\EventListener\JsonRequestTransformerListener
+#    tags:
+#      - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: 100 }
+
 fos_user:
     db_driver: %fos_user_db_driver%
     firewall_name: main

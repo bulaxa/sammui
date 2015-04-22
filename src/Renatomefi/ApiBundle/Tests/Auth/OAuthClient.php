@@ -6,6 +6,7 @@ use OAuth2\OAuth2;
 use Renatomefi\ApiBundle\DataFixtures\MongoDB\LoadOAuthClient;
 use Renatomefi\ApiBundle\Document\Client;
 use Renatomefi\UserBundle\DataFixtures\MongoDB\LoadUsers;
+use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
 use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
 
 /**
@@ -24,7 +25,7 @@ trait OAuthClient
     /**
      * @return Client
      */
-    public function getOAuthClient()
+    protected function getOAuthClient()
     {
         if ($this->_OAuthClient)
             return $this->_OAuthClient;
@@ -46,7 +47,7 @@ trait OAuthClient
      * @param array $params
      * @return mixed
      */
-    public function queryOAuth2Token($params = [])
+    protected function queryOAuth2Token($params = [])
     {
         if (!method_exists($this, 'assertJsonResponse'))
             throw new \PHPUnit_Framework_Exception('You must to use AssertRestUtils trait in order to use this OAuthClient trait');
@@ -69,7 +70,7 @@ trait OAuthClient
     /**
      * @return mixed
      */
-    public function getAnonymousCredentials()
+    protected function getAnonymousCredentials()
     {
         return $this->queryOAuth2Token([
             'grant_type' => OAuth2::GRANT_TYPE_CLIENT_CREDENTIALS
@@ -79,7 +80,7 @@ trait OAuthClient
     /**
      * @return mixed
      */
-    public function getAdminCredentials()
+    protected function getAdminCredentials()
     {
         return $this->queryOAuth2Token([
             'grant_type' => OAuth2::GRANT_TYPE_USER_CREDENTIALS,
@@ -88,4 +89,18 @@ trait OAuthClient
         ]);
     }
 
+    protected function getCredentialsByRole($role)
+    {
+        switch ($role) {
+            case 'ROLE_ADMIN':
+                return $this->getAdminCredentials();
+                break;
+            case 'ROLE_USER':
+                throw new \Exception('ROLE_USER not implemented yet');
+                break;
+            default:
+                return $this->getAnonymousCredentials();
+                break;
+        }
+    }
 }

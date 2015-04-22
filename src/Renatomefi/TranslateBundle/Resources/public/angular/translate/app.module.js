@@ -4,11 +4,9 @@
 var sammuiTranslate = angular.module('sammui.translate', [
     'pascalprecht.translate',
     'sammui.translateServices',
-    'sammui.translateControllers',
+    'sammui.translateControllers'
 ]).config(['$translateProvider', function ($translateProvider) {
-    //$translateProvider.determinePreferredLanguage();
-    $translateProvider.preferredLanguage('en-us');
-    //var preferred = $translateProvider.preferredLanguage();
+    //$translateProvider.preferredLanguage('en-us');
     $translateProvider.useLoader('translateLoader');
 }]);
 
@@ -16,17 +14,25 @@ sammuiTranslate.filter('getByKey', function () {
     return function (data, key) {
         var result = null;
         angular.forEach(data, function (item) {
-            if (key == item.key) {
+            if (key === item.key) {
                 result = item;
                 return;
             }
         });
 
         return result;
-    }
+    };
 });
 
-sammuiTranslate.run(function ($rootScope, $translate, translateLangsInfo) {
+sammuiTranslate.run(function ($rootScope, $translate, translateLangsInfo, localStorageService) {
+
+    if (localStorageService.get('preferredLanguage')) {
+        $translate.use(localStorageService.get('preferredLanguage'));
+    } else {
+        // fallback language
+        $translate.use('en-us');
+    }
+
     $rootScope.modalLangChoose = function () {
         $rootScope.loading = true;
         $rootScope.modalLangItems = translateLangsInfo.query(function () {
@@ -36,6 +42,6 @@ sammuiTranslate.run(function ($rootScope, $translate, translateLangsInfo) {
     };
     $rootScope.appLangChoose = function (lang) {
         $translate.use(lang);
-        //$translate.refresh();
+        localStorageService.set('preferredLanguage', lang);
     };
 });

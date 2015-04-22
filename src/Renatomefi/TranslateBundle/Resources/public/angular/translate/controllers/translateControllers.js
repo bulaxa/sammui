@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 angular.module('sammui.translateControllers', ['ngRoute'])
     // Routes
@@ -27,7 +27,7 @@ angular.module('sammui.translateControllers', ['ngRoute'])
 
                     $scope.translate.langs = data;
 
-                    if ($location.search()['lang']) {
+                    if ($location.search().lang) {
                         $scope.langKeysTable();
                     }
 
@@ -54,11 +54,12 @@ angular.module('sammui.translateControllers', ['ngRoute'])
 
             $scope.langKeysTable = function (lang, reload) {
 
-                lang = lang || $location.search()['lang'];
+                lang = lang || $location.search().lang;
                 reload = reload || false;
 
-                if (angular.isUndefined(lang))
+                if (angular.isUndefined(lang)) {
                     return;
+                }
 
                 var language = $filter('getByKey')($scope.translate.langs, lang);
 
@@ -76,7 +77,9 @@ angular.module('sammui.translateControllers', ['ngRoute'])
 
                 var langFrom = translateLangs.get({lang: lang},
                     function () {
-                        if (!language) $scope.translate.langs.push(langFrom);
+                        if (!language) {
+                            $scope.translate.langs.push(langFrom);
+                        }
                         $scope.langKeysTable(lang);
                         $rootScope.loading = false;
                     },
@@ -98,7 +101,7 @@ angular.module('sammui.translateControllers', ['ngRoute'])
                 $scope.translateLangKeyFormEditableKey = (translation.id) ? true : false;
             };
             $scope.saveLang = function (data) {
-                
+
                 var post = $q.defer();
 
                 translateLangs.save({
@@ -125,7 +128,7 @@ angular.module('sammui.translateControllers', ['ngRoute'])
 
                 translateLangsKeys[type](
                     {
-                        lang: $location.search()['lang'],
+                        lang: $location.search().lang,
                         keys: data.key,
                         value: data.value
                     },
@@ -157,7 +160,7 @@ angular.module('sammui.translateControllers', ['ngRoute'])
 
                 translateLangsKeys.delete(
                     {
-                        lang: $location.search()['lang'],
+                        lang: $location.search().lang,
                         keys: langTranslation.key
                     },
                     function (response) {
@@ -173,7 +176,7 @@ angular.module('sammui.translateControllers', ['ngRoute'])
                 return post;
             };
 
-            $scope.$on('$locationChangeSuccess', function (e) {
+            $scope.$on('$locationChangeSuccess', function () {
                 $scope.langKeysTable();
             });
 
